@@ -1,0 +1,5 @@
+chroma_db/
+rtdocs/
+.env
+.python-version
+__pycache__

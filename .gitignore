@@ -3,3 +3,4 @@ rtdocs/
 .env
 .python-version
 __pycache__
+docs/*

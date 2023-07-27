@@ -3,3 +3,6 @@ openai
 chromadb
 sentence-transformers
 python-dotenv
+docx2txt
+pymupdf
+streamlit

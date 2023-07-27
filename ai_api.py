@@ -19,35 +19,49 @@ llm = ChatOpenAI(streaming=True,
                   temperature=0,
                   openai_api_key=openai_api_key)
 
-db = vectordb()
 
-prompt_template = """\
-Act as an expert in Python development and use the following pieces of context 
-from the tts.readthedocs.io about Couqui TTS, a library for advanced Text-to-Speech
-generation, to answer the question step by step at the end. If you don't know the answer, 
-just say that you don't know, don't try to makeup an answer and recommend that they 
-visit https://tts.readthedocs.io/ For more information.
+# prompt_template = """\
+# Act as an expert in Python development and use the following pieces of context 
+# from the tts.readthedocs.io about Couqui TTS, a library for advanced Text-to-Speech
+# generation, to answer the question step by step at the end. If you don't know the answer, 
+# just say that you don't know, don't try to makeup an answer and recommend that they 
+# visit https://tts.readthedocs.io/ For more information.
 
-{context}
+# {context}
 
-Question: {question}
-"""
+# Question: {question}
+# """
 
-PROMPT = PromptTemplate(
-    template=prompt_template, input_variables=["context", "question"]
-)
+# PROMPT = PromptTemplate(
+#     template=prompt_template, input_variables=["context", "question"]
+# )
 
-while True:
-    query = input("What is your question? >>> ")
-    docs = db.similarity_search(query=query,
-                                k=4)
-    chain = load_qa_chain(llm,
-                          chain_type="stuff",
-                          prompt=PROMPT,
-                          verbose=True,)
 
-    chain.run(
-        {"input_documents": docs,
-         "question": query
-         },
-         )
+def get_query(query, collection_name):
+    docsearch = vectordb_query(query, collection_name)
+    response = chain_query(query, docsearch)
+    return response
+
+
+def vectordb_query(query, collection_name):
+    db = vectordb(collection_name)
+    docsearch = db.similarity_search(query)
+    return docsearch
+
+
+def chain_query(query, docsearch):
+    chain = load_qa_chain(llm, chain_type="stuff", verbose=True,)
+    return chain.run({"input_documents": docsearch, "question": query},)
+
+
+if __name__ == "__main__":
+    collection_name = input("Enter collection name of query: ")
+    db = vectordb(collection_name)
+    while True:
+        query = input("What is your question? >>> ")
+        docs = db.similarity_search(query=query,
+                                    k=4)
+        chain = load_qa_chain(llm, chain_type="stuff", verbose=True,)
+
+        chain.run({"input_documents": docs,
+                   "question": query},)

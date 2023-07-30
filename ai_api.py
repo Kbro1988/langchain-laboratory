@@ -1,19 +1,19 @@
 import os
-from dotenv import load_dotenv
 
-from vectorstore import vectordb
 import langchain
-from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chains.question_answering.stuff_prompt import CHAT_PROMPT as LG_PROMPT
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from dotenv import load_dotenv
 from langchain.cache import InMemoryCache
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chains.question_answering.stuff_prompt import \
+    CHAT_PROMPT as LG_PROMPT
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
 
-
-from func_logger import configure_logging, log_output
-from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
 from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
+from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
+from func_logger import configure_logging, log_output
+from vectorstore import vectordb
 
 # Initialize func_logger and load .env in CWD
 configure_logging()

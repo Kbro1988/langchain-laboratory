@@ -1,16 +1,14 @@
-from pathlib import Path
-import subprocess
 import logging
+import subprocess
+from pathlib import Path
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import (
-    ReadTheDocsLoader,
-    Docx2txtLoader,
-    PyMuPDFLoader)
-from langchain.embeddings import SentenceTransformerEmbeddings
-from langchain.vectorstores import Chroma
 import chromadb
 from chromadb.config import Settings as chroma_settings
+from langchain.document_loaders import (Docx2txtLoader, PyMuPDFLoader,
+                                        ReadTheDocsLoader)
+from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import Chroma
 
 logger = logging.basicConfig(level='INFO')
 db_directory = Path("./chroma_db")

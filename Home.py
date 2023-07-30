@@ -1,13 +1,11 @@
 import os
 from textwrap import dedent
-from ai_api import get_query, AVAILABLE_PROMPTS, MODELS
+
 import streamlit as st
-from vectorstore import (
-    DOC_DIRECTORY,
-    list_collections,
-    create_collection,
-    create_vectordb,
-    delete_collection,)
+
+from ai_api import AVAILABLE_PROMPTS, MODELS, get_query
+from vectorstore import (DOC_DIRECTORY, create_collection, create_vectordb,
+                         delete_collection, list_collections)
 
 st.set_page_config(page_title="QA",
                    page_icon="",

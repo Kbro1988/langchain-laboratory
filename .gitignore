@@ -4,3 +4,4 @@ rtdocs/
 .python-version
 __pycache__
 docs/*
+*.log

@@ -1,7 +1,6 @@
 import logging
 from typing import Union
 
-
 '''
 Add to modules with functions to log:
 

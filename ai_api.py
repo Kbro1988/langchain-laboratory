@@ -1,4 +1,8 @@
+#! /usr/bin/env python3
+
 import os
+import argparse
+from textwrap import dedent
 
 import langchain
 from dotenv import load_dotenv
@@ -16,7 +20,7 @@ from func_logger import configure_logging, log_output
 from vectorstore import vectordb
 
 # Initialize func_logger and load .env in CWD
-configure_logging()
+configure_logging(level='debug')
 load_dotenv()
 
 # Retrieve OpenAI API Key from .env file
@@ -81,8 +85,17 @@ def chain_query(llm, query, docsearch, prompt):
     return chain.run({"input_documents": docsearch, "question": query},)
 
 
-if __name__ == "__main__":
-    collection_name = input("Enter collection name of query: ")
+def main(args):
+    if args.log_level:
+        configure_logging(level=args.log_level)
+    if args.collection:
+        collection_name = args.collection
+    else:
+        collection_name = input("Enter collection name of query: ")
+    if args.prompt:
+        prompt = args.prompt
+    else:
+        prompt = "LG_PROMPT - Gen Use"
     db = vectordb(collection_name)
     while True:
         query = input("What is your question? >>> ")
@@ -93,4 +106,32 @@ if __name__ == "__main__":
                                    openai_api_key=openai_api_key),
                     query=query,
                     docsearch=docsearch,
-                    prompt="LG_PROMPT - Gen Use")
+                    prompt=prompt)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
+                                     description="ai_api.py - The module that deals with the AI logic for this application",
+                                     epilog=dedent("""
+                                            Usage examples:
+                                            1. Run with default log level and prompt:
+                                                   
+                                            `python your_script.py -c your_collection_name`
+
+                                            2. Set log level to 'info' and use TK_CHAT_PROMPT:
+                                                   
+                                            `python your_script.py -l info -c your_collection_name -p TK_CHAT_PROMPT`
+
+                                            Please note:
+                                            - The --log-level argument is optional. If not provided, the script will use the default log level.
+                                            - The --collection argument is optional and you can enter it when the program starts too. The Vector Store
+                                              collection must already be created.
+                                            - The prompt can be selected using the -p or --prompt argument. If not used, LG_PROMPT - Gen Use is the default.
+                                            - Make sure to set the OPENAI_API_KEY environment variable with your valid OpenAI API key before running the script.
+                                            """))
+   
+    parser.add_argument("-l", "--log-level", type=str, help="Set the logging level of func_logger.")
+    parser.add_argument("-c", "--collection", type=str, help="Set the Vector DB Collection to be queried.")
+    parser.add_argument("-p", "--prompt", type=str, help="Set the prompt template. Default is LG_PROMPT.")
+    args = parser.parse_args()
+    main(args)

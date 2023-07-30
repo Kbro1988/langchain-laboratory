@@ -2,19 +2,28 @@ import os
 from dotenv import load_dotenv
 
 from vectorstore import vectordb
+import langchain
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.question_answering.stuff_prompt import CHAT_PROMPT as LG_PROMPT
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.cache import InMemoryCache
+
 
 from func_logger import configure_logging, log_output
 from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
+from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
 
 configure_logging()
 load_dotenv()
-openai_api_key = os.environ['OPENAI_API_KEY']
 
-AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use", "TK_CHAT_PROMPT"]
+openai_api_key = os.environ['OPENAI_API_KEY']
+langchain.llm_cache = InMemoryCache()
+
+AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
+                     "TK_CHAT_PROMPT",
+                     "GIT_BOOK_PROMPT",]
+
 MODELS = ["gpt-3.5-turbo",
           "gpt-3.5-turbo-0613",
           "gpt-3.5-turbo-16k-0613",
@@ -32,7 +41,9 @@ def get_query(model,
                      callbacks=[StreamingStdOutCallbackHandler()],
                      temperature=0,
                      openai_api_key=openai_api_key,
-                     model=model)
+                     model=model,
+                     )
+
     docsearch = vectordb_query(query, collection_name, k_value)
     response = chain_query(llm, query, docsearch, prompt)
     return response
@@ -48,6 +59,7 @@ def vectordb_query(query, collection_name, k_value):
 def prompt_selector(prompt):
     prompts = {"LG_PROMPT - Gen Use": LG_PROMPT,
                "TK_CHAT_PROMPT": TK_CHAT_PROMPT,
+               "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT, 
                }
     if prompt not in prompts:
         raise ValueError(f"Invalid Prompt Name: {prompt}.")

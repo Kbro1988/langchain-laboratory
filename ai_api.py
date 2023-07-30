@@ -39,7 +39,6 @@ MODELS = ["gpt-3.5-turbo",
           ]
 
 
-@log_output(level='debug')
 def get_query(model,
               query,
               collection_name,
@@ -51,13 +50,11 @@ def get_query(model,
                      openai_api_key=openai_api_key,
                      model=model,
                      )
-
     docsearch = vectordb_query(query, collection_name, k_value)
     response = chain_query(llm, query, docsearch, prompt)
     return response
 
 
-@log_output(level='debug')
 def vectordb_query(query, collection_name, k_value):
     db = vectordb(collection_name)
     docsearch = db.similarity_search(query, k=k_value)
@@ -71,7 +68,6 @@ def prompt_selector(prompt):
                }
     if prompt not in prompts:
         raise ValueError(f"Invalid Prompt Name: {prompt}.")
-
     return prompts[prompt]
 
 
@@ -82,7 +78,6 @@ def chain_query(llm, query, docsearch, prompt):
                           verbose=True,
                           prompt=prompt_template,
                           memory=memory,)
-
     return chain.run({"input_documents": docsearch, "question": query},)
 
 

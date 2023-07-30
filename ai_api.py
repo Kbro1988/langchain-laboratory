@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
-import os
 import argparse
+import os
 from textwrap import dedent
 
 import langchain

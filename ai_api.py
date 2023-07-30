@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 from vectorstore import vectordb
 import langchain
+from langchain.memory import ConversationBufferMemory
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.question_answering.stuff_prompt import CHAT_PROMPT as LG_PROMPT
@@ -14,15 +15,22 @@ from func_logger import configure_logging, log_output
 from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
 from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
 
+# Initialize func_logger and load .env in CWD
 configure_logging()
 load_dotenv()
 
+# Retrieve OpenAI API Key from .env file
 openai_api_key = os.environ['OPENAI_API_KEY']
+
+# When using Chat_Models the llm_cache will improve preformance
 langchain.llm_cache = InMemoryCache()
+
+# Initialize Memory Buffer for Conversation
+memory = ConversationBufferMemory()
 
 AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
                      "TK_CHAT_PROMPT",
-                     "GIT_BOOK_PROMPT",]
+                     "GIT_BOOK_PROMPT", ]
 
 MODELS = ["gpt-3.5-turbo",
           "gpt-3.5-turbo-0613",
@@ -59,7 +67,7 @@ def vectordb_query(query, collection_name, k_value):
 def prompt_selector(prompt):
     prompts = {"LG_PROMPT - Gen Use": LG_PROMPT,
                "TK_CHAT_PROMPT": TK_CHAT_PROMPT,
-               "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT, 
+               "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT,
                }
     if prompt not in prompts:
         raise ValueError(f"Invalid Prompt Name: {prompt}.")
@@ -72,7 +80,8 @@ def chain_query(llm, query, docsearch, prompt):
     prompt_template = prompt_selector(prompt)
     chain = load_qa_chain(llm, chain_type="stuff",
                           verbose=True,
-                          prompt=prompt_template)
+                          prompt=prompt_template,
+                          memory=memory,)
 
     return chain.run({"input_documents": docsearch, "question": query},)
 

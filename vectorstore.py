@@ -18,7 +18,7 @@ DOC_DIRECTORY = Path("./docs")
 embedding_function = SentenceTransformerEmbeddings(
     model_name="all-MiniLM-L6-v2")
 
-## Loaders ##
+# Loaders
 
 
 def readthedocs_loader(file_path):
@@ -74,7 +74,7 @@ def get_loader(filename):
         raise "No method defined for this object's value."
 
 
-## Chroma Functions ##
+# Chroma Functions
 
 
 def chroma_client():

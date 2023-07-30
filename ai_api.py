@@ -2,55 +2,66 @@ import os
 from dotenv import load_dotenv
 
 from vectorstore import vectordb
-from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
-from langchain.schema import (
-    HumanMessage,
-)
-
+from langchain.chains.question_answering.stuff_prompt import CHAT_PROMPT as LG_PROMPT
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
+from func_logger import configure_logging, log_output
+from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
+
+configure_logging()
 load_dotenv()
 openai_api_key = os.environ['OPENAI_API_KEY']
 
-llm = ChatOpenAI(streaming=True,
-                  callbacks=[StreamingStdOutCallbackHandler()],
-                  temperature=0,
-                  openai_api_key=openai_api_key)
+AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use", "TK_CHAT_PROMPT"]
+MODELS = ["gpt-3.5-turbo",
+          "gpt-3.5-turbo-0613",
+          "gpt-3.5-turbo-16k-0613",
+          "gpt-4-0613",
+          ]
 
 
-# prompt_template = """\
-# Act as an expert in Python development and use the following pieces of context 
-# from the tts.readthedocs.io about Couqui TTS, a library for advanced Text-to-Speech
-# generation, to answer the question step by step at the end. If you don't know the answer, 
-# just say that you don't know, don't try to makeup an answer and recommend that they 
-# visit https://tts.readthedocs.io/ For more information.
-
-# {context}
-
-# Question: {question}
-# """
-
-# PROMPT = PromptTemplate(
-#     template=prompt_template, input_variables=["context", "question"]
-# )
-
-
-def get_query(query, collection_name):
-    docsearch = vectordb_query(query, collection_name)
-    response = chain_query(query, docsearch)
+@log_output(level='debug')
+def get_query(model,
+              query,
+              collection_name,
+              prompt="LG_PROMPT",
+              k_value=4) -> str:
+    llm = ChatOpenAI(streaming=True,
+                     callbacks=[StreamingStdOutCallbackHandler()],
+                     temperature=0,
+                     openai_api_key=openai_api_key,
+                     model=model)
+    docsearch = vectordb_query(query, collection_name, k_value)
+    response = chain_query(llm, query, docsearch, prompt)
     return response
 
 
-def vectordb_query(query, collection_name):
+@log_output(level='debug')
+def vectordb_query(query, collection_name, k_value):
     db = vectordb(collection_name)
-    docsearch = db.similarity_search(query)
+    docsearch = db.similarity_search(query, k=k_value)
     return docsearch
 
 
-def chain_query(query, docsearch):
-    chain = load_qa_chain(llm, chain_type="stuff", verbose=True,)
+def prompt_selector(prompt):
+    prompts = {"LG_PROMPT - Gen Use": LG_PROMPT,
+               "TK_CHAT_PROMPT": TK_CHAT_PROMPT,
+               }
+    if prompt not in prompts:
+        raise ValueError(f"Invalid Prompt Name: {prompt}.")
+
+    return prompts[prompt]
+
+
+@log_output(level='debug')
+def chain_query(llm, query, docsearch, prompt):
+    prompt_template = prompt_selector(prompt)
+    chain = load_qa_chain(llm, chain_type="stuff",
+                          verbose=True,
+                          prompt=prompt_template)
+
     return chain.run({"input_documents": docsearch, "question": query},)
 
 
@@ -59,9 +70,11 @@ if __name__ == "__main__":
     db = vectordb(collection_name)
     while True:
         query = input("What is your question? >>> ")
-        docs = db.similarity_search(query=query,
-                                    k=4)
-        chain = load_qa_chain(llm, chain_type="stuff", verbose=True,)
-
-        chain.run({"input_documents": docs,
-                   "question": query},)
+        docsearch = db.similarity_search(query=query, k=4)
+        chain_query(llm=ChatOpenAI(streaming=True,
+                                   callbacks=[StreamingStdOutCallbackHandler()],
+                                   temperature=0,
+                                   openai_api_key=openai_api_key),
+                    query=query,
+                    docsearch=docsearch,
+                    prompt="LG_PROMPT - Gen Use")

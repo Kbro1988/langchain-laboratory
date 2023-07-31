@@ -1,6 +1,6 @@
-langchain
+langchain == 0.0.247
 openai
-chromadb
+chromadb == 0.4.3
 sentence-transformers
 python-dotenv
 docx2txt

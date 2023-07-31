@@ -58,7 +58,7 @@ with chromadash_col2:
                                  prompt,
                                  k_value,
                                  )
-            st.write(response)
+            st.markdown(response)
 
 
 with chromadash_col3:

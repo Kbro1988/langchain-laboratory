@@ -12,7 +12,6 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.question_answering.stuff_prompt import \
     CHAT_PROMPT as LG_PROMPT
 from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
 
 from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
 from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
@@ -20,7 +19,7 @@ from func_logger import configure_logging, log_output
 from vectorstore import vectordb
 
 # Initialize func_logger and load .env in CWD
-configure_logging(level='debug')
+configure_logging()
 load_dotenv()
 
 # Retrieve OpenAI API Key from .env file
@@ -29,8 +28,6 @@ openai_api_key = os.environ['OPENAI_API_KEY']
 # When using Chat_Models the llm_cache will improve preformance
 langchain.llm_cache = InMemoryCache()
 
-# Initialize Memory Buffer for Conversation
-memory = ConversationBufferMemory()
 
 AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
                      "TK_CHAT_PROMPT",
@@ -77,11 +74,11 @@ def prompt_selector(prompt):
 
 @log_output(level='debug')
 def chain_query(llm, query, docsearch, prompt):
+    # Initialize Memory Buffer for Conversation
     prompt_template = prompt_selector(prompt)
     chain = load_qa_chain(llm, chain_type="stuff",
                           verbose=True,
-                          prompt=prompt_template,
-                          memory=memory,)
+                          prompt=prompt_template,)
     return chain.run({"input_documents": docsearch, "question": query},)
 
 
@@ -115,11 +112,11 @@ if __name__ == "__main__":
                                      epilog=dedent("""
                                             Usage examples:
                                             1. Run with default log level and prompt:
-                                                   
+
                                             `python your_script.py -c your_collection_name`
 
                                             2. Set log level to 'info' and use TK_CHAT_PROMPT:
-                                                   
+
                                             `python your_script.py -l info -c your_collection_name -p TK_CHAT_PROMPT`
 
                                             Please note:
@@ -129,7 +126,7 @@ if __name__ == "__main__":
                                             - The prompt can be selected using the -p or --prompt argument. If not used, LG_PROMPT - Gen Use is the default.
                                             - Make sure to set the OPENAI_API_KEY environment variable with your valid OpenAI API key before running the script.
                                             """))
-   
+
     parser.add_argument("-l", "--log-level", type=str, help="Set the logging level of func_logger.")
     parser.add_argument("-c", "--collection", type=str, help="Set the Vector DB Collection to be queried.")
     parser.add_argument("-p", "--prompt", type=str, help="Set the prompt template. Default is LG_PROMPT.")

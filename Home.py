@@ -2,6 +2,7 @@ import os
 from textwrap import dedent
 
 import streamlit as st
+from streamlit.logger import get_logger
 
 from ai_api import AVAILABLE_PROMPTS, MODELS, get_query
 from vectorstore import (DOC_DIRECTORY, create_collection, create_vectordb,
@@ -11,17 +12,25 @@ st.set_page_config(page_title="QA",
                    page_icon="",
                    layout="wide")
 
-chromadash = st.container()
+# Set Logging
+logger = get_logger(__name__)
 
-chromadash.title("Chroma Vector Store Dashboard")
-chromadash_col1, chromadash_col2, chromadash_col3 = chromadash.columns([1, 1, 1])
-with chromadash_col1:
-    st.header("Current Vectore Store Collections")
-    for coll in list_collections():
-        st.divider()
-        st.write(f"📚 name: {coll.name:} | 💫 vectors: {coll.count()}")
 
-with chromadash_col2:
+def session_state(key, value):
+    if key not in st.session_state:
+        st.session_state[key] = value
+        logger.info(f"Session State: {key} added.")
+    elif key in st.session_state:
+        st.session_state[key] = value
+        logger.info(f"Session State: {key} updated")
+
+
+labdash = st.container()
+
+labdash.title("LangChain Laboratory 🧪")
+
+labdash_col1, labdash_col2, labdash_col3 = labdash.columns([1, 1, 1])
+with labdash_col1:
     st.header("Query Document 🙋‍♂️")
     with st.form("query"):
         model = st.selectbox("Choose LLM",
@@ -50,46 +59,66 @@ with chromadash_col2:
                                                chuncks you will retrieve from the Vector Store."""))
         query = st.text_input("Query")
         submitted = st.form_submit_button("Query")
+    st.subheader("Reponse:")
     with st.empty():
         if submitted:
-            response = get_query(model,
-                                 query,
-                                 collection_name,
-                                 prompt,
-                                 k_value,
-                                 )
+            with st.spinner("Processing..."):
+                response = get_query(model,
+                                     query,
+                                     collection_name,
+                                     prompt,
+                                     k_value,
+                                     )
             st.markdown(response)
 
 
-with chromadash_col3:
-    st.header("Create & Modify Collections")
-    with st.form("create_collection"):
-        st.write("Create a new Collection")
-        collection_name = st.text_input("Collection Name")
-        submitted = st.form_submit_button("Create")
-    if submitted:
-        create_collection(collection_name)
-        st.experimental_rerun()
+with labdash_col2:
+    st.header("Current Vectore Store Collections")
+    for coll in list_collections():
+        st.divider()
+        st.write(f"📚 name: {coll.name:} | 💫 vectors: {coll.count()}")
 
-    st.header("Delete a Collection")
-    with st.form("delete_collection"):
-        st.write("Delete a Collection")
-        collection_name = st.selectbox("Choose a Collection",
-                                       options=[coll.name for coll in list_collections()]
-                                       )
-        submitted = st.form_submit_button("Delete")
-    if submitted:
-        delete_collection(collection_name)
-        st.experimental_rerun()
+with labdash_col3:
+    with st.expander("Expand for Vector Store Settings 👇"):
+        st.header("Create & Modify Collections")
+        with st.form("create_collection"):
+            st.write("Create a new Collection")
+            collection_name = st.text_input("Collection Name")
+            submitted = st.form_submit_button("Create")
+        if submitted:
+            create_collection(collection_name)
+            st.experimental_rerun()
 
-    st.header("Load a Document")
-    with st.form("load_document"):
-        st.write("Load a Document")
-        filename = st.selectbox("Choose Document",
-                                [doc for doc in os.listdir(DOC_DIRECTORY)])
-        collection_name = st.selectbox("Choose a Collection",
-                                       options=[coll.name for coll in list_collections()])
-        submitted = st.form_submit_button("Load Document")
-    if submitted:
-        create_vectordb(filename, collection_name)
-        st.experimental_rerun()
+        st.header("Delete a Collection")
+        with st.form("delete_collection"):
+            st.write("Delete a Collection")
+            collection_name = st.selectbox("Choose a Collection",
+                                        options=[coll.name for coll in list_collections()]
+                                        )
+            submitted = st.form_submit_button("Delete")
+        if submitted:
+            delete_collection(collection_name)
+            st.experimental_rerun()
+
+        st.header("Load a Document")
+        with st.form("load_document"):
+            st.write("Load a Document from the 'docs' directory.")
+            if DOC_DIRECTORY.exists():
+                session_state('docs_exists', False)
+                filename = st.selectbox("Choose Document",
+                                        [doc for doc in os.listdir(DOC_DIRECTORY)],
+                                        key='document_filename', )
+            else:
+                session_state('docs_exists', True)
+                st.warning("The 'docs' file doesn't exist. Please be sure a directory name 'docs' is in your root directory of the app. ")
+            collection_name = st.selectbox("Choose a Collection",
+                                        options=[coll.name for coll in list_collections()])
+            if collection_name is None or filename is None:
+                session_state('docs_exists', True)
+                st.warning("No documents / No collections available. Please add the missing items. ")
+
+            submitted = st.form_submit_button("Load Document", disabled=st.session_state.docs_exists)
+        if submitted:
+            with st.spinner('Processing...'):
+                create_vectordb(filename, collection_name)
+            st.experimental_rerun()

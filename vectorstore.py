@@ -1,4 +1,3 @@
-import logging
 import subprocess
 from pathlib import Path
 
@@ -10,7 +9,10 @@ from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 
-logger = logging.basicConfig(level='INFO')
+from streamlit.logger import get_logger
+
+# Set Logging
+logger = get_logger(__name__)
 db_directory = Path("./chroma_db")
 DOC_DIRECTORY = Path("./docs")
 embedding_function = SentenceTransformerEmbeddings(
@@ -78,7 +80,7 @@ def get_loader(filename):
 def chroma_client():
     chroma_client = chromadb.PersistentClient(db_directory.as_posix(),
                                               chroma_settings(
-                                                anonymized_telemetry=False))
+                                              anonymized_telemetry=False))
     return chroma_client
 
 
@@ -102,9 +104,12 @@ def vectordb(collection_name):
 
 
 def list_collections():
-    collection_list = chroma_client().list_collections()
-    for collection in collection_list:
-        yield collection
+    try:
+        collection_list = chroma_client().list_collections()
+        for collection in collection_list:
+            yield collection
+    except ValueError as e:
+        logger.warning("%s The Vector Store does not have any collections", e)
 
 
 def create_collection(collection_name):

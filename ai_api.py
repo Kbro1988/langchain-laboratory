@@ -26,9 +26,8 @@ openai_api_key = os.environ['OPENAI_API_KEY']
 
 # When using Chat_Models the llm_cache will improve preformance
 langchain.llm_cache = InMemoryCache()
-#langchain.debug = True
+langchain.debug = True
 
-message_history = vectordb('memory')
 memory = ConversationBufferMemory(input_key="question", return_messages=True,)
 
 
@@ -130,7 +129,7 @@ if __name__ == "__main__":
                                             - Make sure to set the OPENAI_API_KEY environment variable with your valid OpenAI API key before running the script.
                                             """))
 
-    #parser.add_argument("-l", "--log-level", type=str, help="Set the logging level of func_logger.")
+    # parser.add_argument("-l", "--log-level", type=str, help="Set the logging level of func_logger.")
     parser.add_argument("-c", "--collection", type=str, help="Set the Vector DB Collection to be queried.")
     parser.add_argument("-p", "--prompt", type=str, help="Set the prompt template. Default is LG_PROMPT.")
     args = parser.parse_args()

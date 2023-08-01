@@ -15,6 +15,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 
 from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
+from app_prompt.combined_docs_prompt import COMBINE_DOC_PROMPT
 from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT as TK_CHAT_PROMPT
 from vectorstore import vectordb
 
@@ -33,7 +34,8 @@ memory = ConversationBufferMemory(input_key="question", return_messages=True,)
 
 AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
                      "TK_CHAT_PROMPT",
-                     "GIT_BOOK_PROMPT", ]
+                     "GIT_BOOK_PROMPT",
+                     "COMBINE_DOC_PROMPT", ]
 
 MODELS = ["gpt-3.5-turbo",
           "gpt-3.5-turbo-0613",
@@ -68,6 +70,7 @@ def prompt_selector(prompt):
     prompts = {"LG_PROMPT - Gen Use": LG_PROMPT,
                "TK_CHAT_PROMPT": TK_CHAT_PROMPT,
                "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT,
+               "COMBINE_DOC_PROMPT": COMBINE_DOC_PROMPT,
                }
     if prompt not in prompts:
         raise ValueError(f"Invalid Prompt Name: {prompt}.")

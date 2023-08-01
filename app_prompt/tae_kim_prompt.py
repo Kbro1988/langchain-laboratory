@@ -15,7 +15,7 @@ system_template = dedent("""\
     ----------------
     {context}
     ----------------
-                         
+
     Here is the Chat History. Please use this as a coreference:
     ---------------
     {history}

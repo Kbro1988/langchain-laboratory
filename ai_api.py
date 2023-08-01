@@ -12,7 +12,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.question_answering.stuff_prompt import \
     CHAT_PROMPT as LG_PROMPT
 from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationStringBufferMemory
 
 from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
 from app_prompt.combined_docs_prompt import COMBINE_DOC_PROMPT
@@ -29,7 +29,7 @@ openai_api_key = os.environ['OPENAI_API_KEY']
 langchain.llm_cache = InMemoryCache()
 langchain.debug = True
 
-memory = ConversationBufferMemory(input_key="question", return_messages=True,)
+memory = ConversationStringBufferMemory(input_key="question", return_messages=True,)
 
 
 AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
@@ -85,6 +85,17 @@ def chain_query(llm, query, docsearch, prompt):
                           prompt=prompt_template,
                           memory=memory)
     return chain.run({"input_documents": docsearch, "question": query},)
+
+
+def load_memory():
+    # Simple function to return history buffer
+    output = memory.load_memory_variables({''})
+    return output
+
+
+def clear_memory():
+    # Simple Function to reset Chat memory
+    memory.clear()
 
 
 def main(args):

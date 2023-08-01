@@ -4,7 +4,7 @@ from textwrap import dedent
 import streamlit as st
 from streamlit.logger import get_logger
 
-from ai_api import AVAILABLE_PROMPTS, MODELS, get_query
+from ai_api import AVAILABLE_PROMPTS, MODELS, get_query, clear_memory, load_memory
 from vectorstore import (DOC_DIRECTORY, create_collection, create_vectordb,
                          delete_collection, list_collections)
 
@@ -59,6 +59,13 @@ with labdash_col1:
                                                chuncks you will retrieve from the Vector Store."""))
         query = st.text_input("Query")
         submitted = st.form_submit_button("Query")
+
+    with st.expander("Memory"):
+        st.json(load_memory())
+        if st.button("Reset Memory"):
+            clear_memory()
+            st.experimental_rerun()
+
     st.subheader("Reponse:")
     with st.empty():
         if submitted:
@@ -93,8 +100,7 @@ with labdash_col3:
         with st.form("delete_collection"):
             st.write("Delete a Collection")
             collection_name = st.selectbox("Choose a Collection",
-                                        options=[coll.name for coll in list_collections()]
-                                        )
+                                           options=[coll.name for coll in list_collections()])
             submitted = st.form_submit_button("Delete")
         if submitted:
             delete_collection(collection_name)
@@ -112,7 +118,7 @@ with labdash_col3:
                 session_state('docs_exists', True)
                 st.warning("The 'docs' file doesn't exist. Please be sure a directory name 'docs' is in your root directory of the app. ")
             collection_name = st.selectbox("Choose a Collection",
-                                        options=[coll.name for coll in list_collections()])
+                                           options=[coll.name for coll in list_collections()])
             if collection_name is None or filename is None:
                 session_state('docs_exists', True)
                 st.warning("No documents / No collections available. Please add the missing items. ")

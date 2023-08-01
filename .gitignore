@@ -1,7 +1,7 @@
 # Ignore this Files and Directories
 chroma_db/
 rtdocs/
-docs/*
+document_repo/*
 .vscode/
 
 # Byte-compiled / optimized / DLL files

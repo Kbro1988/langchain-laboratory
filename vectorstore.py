@@ -8,13 +8,12 @@ from langchain.document_loaders import (Docx2txtLoader, PyMuPDFLoader,
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
-
 from streamlit.logger import get_logger
 
 # Set Logging
 logger = get_logger(__name__)
 db_directory = Path("./chroma_db")
-DOC_DIRECTORY = Path("./docs")
+DOC_DIRECTORY = Path("./document_repo")
 embedding_function = SentenceTransformerEmbeddings(
     model_name="all-MiniLM-L6-v2")
 

@@ -4,7 +4,8 @@ from textwrap import dedent
 import streamlit as st
 from streamlit.logger import get_logger
 
-from ai_api import AVAILABLE_PROMPTS, MODELS, get_query, clear_memory, load_memory
+from ai_api import (AVAILABLE_PROMPTS, MODELS, clear_memory, get_query,
+                    load_memory)
 from vectorstore import (DOC_DIRECTORY, create_collection, create_vectordb,
                          delete_collection, list_collections)
 
@@ -105,10 +106,24 @@ with labdash_col3:
         if submitted:
             delete_collection(collection_name)
             st.experimental_rerun()
+        
+        st.header("Loading Documents to Vector Store")
+        st.write("Load a document to 'document_repo' directory.")
+        uploaded_files = st.file_uploader(label="Upload Document",
+                                          type=["pdf", "txt", "docx"],
+                                          accept_multiple_files=True,
+                                          key="FileUploader",)
+        if uploaded_files is not None:
+            for uploaded_file in uploaded_files:
+                fp = DOC_DIRECTORY.joinpath(f"{uploaded_file.name}")
+                with open(fp.as_posix(), "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                    logger.info("%s uploaded", uploaded_file)
+                    st.success(f"Uploaded {uploaded_file.name} to {DOC_DIRECTORY}")
+        with st.form("load_document_to_collection"):
+            st.write("Load a Document from the 'document_repo' directory to vector store collection.")
+            st.subheader("Upload Document to Doc Repo")
 
-        st.header("Load a Document")
-        with st.form("load_document"):
-            st.write("Load a Document from the 'docs' directory.")
             if DOC_DIRECTORY.exists():
                 session_state('docs_exists', False)
                 filename = st.selectbox("Choose Document",

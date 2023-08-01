@@ -4,7 +4,7 @@ from pathlib import Path
 import chromadb
 from chromadb.config import Settings as chroma_settings
 from langchain.document_loaders import (Docx2txtLoader, PyMuPDFLoader,
-                                        ReadTheDocsLoader)
+                                        ReadTheDocsLoader, TextLoader)
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
@@ -56,12 +56,24 @@ def pdf_loader(file_path):
     return docs
 
 
+def text_loader(file_path):
+    loader = TextLoader(file_path)
+    raw_docs = loader.load()
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+    )
+    docs = text_splitter.split_documents(raw_docs)
+    return docs
+
+
 def get_loader(filename):
     file_path = DOC_DIRECTORY.joinpath(filename)
     doc_extension = file_path.suffix
     method_mapping = {".docx": worddoc_loader,
                       ".pdf": pdf_loader,
                       ".rtdocs": readthedocs_loader,
+                      ".txt": text_loader,
                       }
 
     if doc_extension in method_mapping:

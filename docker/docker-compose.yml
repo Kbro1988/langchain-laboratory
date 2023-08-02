@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+   langchain-laboratory:
+    env_file:
+      - .env
+    container_name: app
+    restart: always
+    build:
+      context: "."
+    ports:
+      - "8501:8501"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./chroma_db:/app/chroma_db:rw
+      - ./document_repo:/app/document_repo:rw
+

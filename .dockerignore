@@ -1,0 +1,5 @@
+.env
+.python-version
+__pycache__
+func_logger.py
+.vscode

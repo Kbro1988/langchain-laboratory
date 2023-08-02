@@ -38,6 +38,27 @@ This application was developed with a Python 3.11 environment. Follow the steps 
 
 Please note that we will be containerizing this application in the next day or so, which will simplify installation and usage.
 
+## Docker Installation
+
+If you prefer to use Docker, follow the steps below:
+
+1. **Prerequisites**: Ensure that Docker is installed on your system. If not, visit [Docker](https://docs.docker.com/engine/install/) for installation instructions. You can verify the installation by running `docker --version`.
+
+2. **Clone the project**: Use the command `git clone https://github.com/barweiss45/langchain-laboratory.git` to clone the project. Next be sure you have moded to the new langchain-laboratory directory, use the command `cd langchain-laboratory`.
+
+3. **Create symbolic links**: Create two symbolic links to point back to the Docker folder for the `Dockerfile` and `docker-compose.yml` file. Use the following commands:
+
+    ```bash
+    ln -s docker/Dockerfile Dockerfile
+    ln -s docker/docker-compose.yml docker-compose.yml
+    ```
+
+4. **Build the container**: Run `docker compose up -d`. Please note that the build may take up to 3 to 4 minutes.
+
+5. **Verify the status**: You can verify the status of the container with the Docker command `docker compose ps`.
+
+After the container is up and running, you can connect to the application via `http://localhost:8501`.
+
 ## Contributing
 
 This is a new project and we're still working on setting up a comprehensive guide for contributions. In the meantime, if you're interested in contributing or have any questions, please feel free to contact [barweiss@cisco.com](mailto:barweiss@cisco.com). We appreciate your interest and patience.

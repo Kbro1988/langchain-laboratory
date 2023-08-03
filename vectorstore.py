@@ -3,8 +3,9 @@ from pathlib import Path
 
 import chromadb
 from chromadb.config import Settings as chroma_settings
-from langchain.document_loaders import (Docx2txtLoader, PyMuPDFLoader,
-                                        ReadTheDocsLoader, TextLoader)
+from langchain.document_loaders import (CSVLoader, Docx2txtLoader,
+                                        PyMuPDFLoader, ReadTheDocsLoader,
+                                        TextLoader)
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
@@ -66,6 +67,11 @@ def text_loader(file_path):
     docs = text_splitter.split_documents(raw_docs)
     return docs
 
+def csv_loader(file_path):
+    loader = CSVLoader(file_path)
+    data = loader.load()
+    return data
+
 
 def get_loader(filename):
     file_path = DOC_DIRECTORY.joinpath(filename)
@@ -74,6 +80,7 @@ def get_loader(filename):
                       ".pdf": pdf_loader,
                       ".rtdocs": readthedocs_loader,
                       ".txt": text_loader,
+                      ".csv": csv_loader,
                       }
 
     if doc_extension in method_mapping:

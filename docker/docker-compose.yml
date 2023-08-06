@@ -4,7 +4,7 @@ services:
    langchain-laboratory:
     env_file:
       - .env
-    container_name: app
+    container_name: lc-lab-app
     restart: always
     build:
       context: "."

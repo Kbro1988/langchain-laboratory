@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# cSpell:enable
 
 import argparse
 import os
@@ -26,7 +27,7 @@ load_dotenv()
 # Retrieve OpenAI API Key from .env file
 openai_api_key = os.environ['OPENAI_API_KEY']
 
-# When using Chat_Models the llm_cache will improve preformance
+# When using Chat_Models the llm_cache will improve performance
 langchain.llm_cache = InMemoryCache()
 langchain.debug = True
 

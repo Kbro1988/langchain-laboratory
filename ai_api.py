@@ -73,7 +73,7 @@ def prompt_selector(prompt):
                "TK_CHAT_PROMPT": TK_CHAT_PROMPT,
                "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT,
                "COMBINE_DOC_PROMPT": COMBINE_DOC_PROMPT,
-               "COKE_PROMPT": BIZ_ANALYSIS_PROMPT,
+               "BIZ_ANALYSIS_PROMPT": BIZ_ANALYSIS_PROMPT,
                }
     if prompt not in prompts:
         raise ValueError(f"Invalid Prompt Name: {prompt}.")

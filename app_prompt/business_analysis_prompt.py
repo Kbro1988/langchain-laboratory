@@ -1,9 +1,7 @@
-from langchain.prompts import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-    )
 from textwrap import dedent
+
+from langchain.prompts import (ChatPromptTemplate, HumanMessagePromptTemplate,
+                               SystemMessagePromptTemplate)
 
 system_template = dedent("""\
     You are expert in business and you can read a SEC 10-K filing and understand the goals and risks of an organization.

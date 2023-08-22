@@ -2,17 +2,72 @@ version: '3'
 
 services:
    langchain-laboratory:
-    env_file:
-      - .env
+    depends_on:
+      - chroma
+      - weaviate
     container_name: lc-lab-app
     restart: always
+    env_file:
+      - .env
     build:
       context: "."
     ports:
       - "8501:8501"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      WEAVIATE_URL: ${WEAVIATE_URL}
     volumes:
-      - ./chroma_db:/app/chroma_db:rw
       - ./document_repo:/app/document_repo:rw
+    networks:
+      - net
+
+   chroma:
+    container_name: chroma_db
+    restart: always
+    image: barweiss45/chroma:0.4.6
+    volumes:
+      - ./chroma:/chroma
+      - index_data:/index_data
+    command: uvicorn chromadb.app:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-config log_config.yml
+    environment:
+      - IS_PERSISTENT=TRUE
+    ports:
+      - 8000:8000
+    networks:
+      - net
+
+   weaviate:
+      container_name: weaviate
+      restart: always
+      command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+      image: semitechnologies/weaviate:1.20.5
+      ports:
+      - 8080:8080
+      environment:
+        QUERY_DEFAULTS_LIMIT: 25
+        AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+        PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+        DEFAULT_VECTORIZER_MODULE: 'none'
+        ENABLE_MODULES: ''
+        CLUSTER_HOSTNAME: 'node1'
+      volumes:
+        - ./weaviate/weaviate_data:/var/lib/weaviate
+      networks:
+        - net
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  index_data:
+    driver: local
+  backups:
+    driver: local
 

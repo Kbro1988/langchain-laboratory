@@ -1,9 +1,7 @@
-from langchain.prompts import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-    )
 from textwrap import dedent
+
+from langchain.prompts import (ChatPromptTemplate, HumanMessagePromptTemplate,
+                               SystemMessagePromptTemplate)
 
 system_template = dedent("""\
     Act as an expert in Git and GitOps that can help new users of Git and

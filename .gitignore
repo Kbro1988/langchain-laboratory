@@ -1,5 +1,13 @@
 # Ignore this Files and Directories
+notebooks/
+chroma/chroma/
+chroma/bin/
+chroma/docs/
+chroma/chromadb/
+chroma/.git
+chroma/index_data/
 chroma_db/
+weaviate/weaviate_data/
 rtdocs/
 document_repo/*
 .vscode/
@@ -166,3 +174,6 @@ cython_debug/
 #.idea/
 docker-compose.yml
 Dockerfile
+weaviate/templates/base_schema_value_example.json
+weaviate/templates/document_schema2.j2
+test_add_texts.ipynb

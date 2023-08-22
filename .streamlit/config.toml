@@ -46,7 +46,7 @@
 # Level of logging: 'error', 'warning', 'info', or 'debug'.
 
 # Default: 'info'
-# level = "info"
+level = "info"
 
 # String format for logging messages. If logger.datetimeFormat is set,
 # logger messages will default to `%(asctime)s.%(msecs)03d %(message)s`. See
@@ -54,7 +54,7 @@
 # for available attributes.
 
 # Default: "%(asctime)s %(message)s"
-# messageFormat = "%(asctime)s %(message)s"
+messageFormat = "%(levelname)s:%(asctime)s:%(name)s:%(module)s | %(message)s "
 
 
 [client]
@@ -274,7 +274,7 @@
 # Whether to send usage statistics to Streamlit.
 
 # Default: true
-# gatherUsageStats = true
+gatherUsageStats = false
 
 # Port where users should point their browsers in order to connect to the
 # app.

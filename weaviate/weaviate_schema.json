@@ -1,0 +1,13 @@
+{
+    // Langchain index_name == Weaviate Class
+    "class": "index_name",
+    "properties": [
+        {
+            "dataType": ["text"],
+            "name": "text",  // LangChain text_key == Weaviate name
+        }
+    ],
+    "vectorIndexConfig": {
+        "distance": "cosine",
+    }
+}

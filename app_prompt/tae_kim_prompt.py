@@ -1,9 +1,7 @@
-from langchain.prompts import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-    )
 from textwrap import dedent
+
+from langchain.prompts import (ChatPromptTemplate, HumanMessagePromptTemplate,
+                               SystemMessagePromptTemplate)
 
 system_template = dedent("""\
     You are an expert Japanese teacher who is well-spoken and skilled in teaching

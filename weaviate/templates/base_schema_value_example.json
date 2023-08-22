@@ -1,0 +1,7 @@
+{
+    "index_name": "My_jinja_schema",
+    "class_description": "This is my Class Description",
+    "text_key": "text",
+    "dataType_description1": "This is where my dataType description is.",
+    "distance_function": "cosine"
+}

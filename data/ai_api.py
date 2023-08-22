@@ -14,7 +14,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationStringBufferMemory
 
 from app_prompt import (BIZ_ANALYSIS_PROMPT, COMBINE_DOC_PROMPT,
-                        GIT_BOOK_PROMPT, TAE_KIM_PROMPT)
+                        GIT_BOOK_PROMPT, TAE_KIM_PROMPT, SWOT_1)
 from data.chroma_db import chroma_vectordb
 from config import Config
 from data.weaviate_db import weaviate_vectordb
@@ -38,7 +38,8 @@ AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
                      "TK_CHAT_PROMPT",
                      "GIT_BOOK_PROMPT",
                      "COMBINE_DOC_PROMPT",
-                     "BIZ_ANALYSIS_PROMPT", ]
+                     "BIZ_ANALYSIS_PROMPT",
+                     "SWOT Analysis TEST v1", ]
 
 MODELS = ["gpt-3.5-turbo",
           "gpt-3.5-turbo-0613",
@@ -106,6 +107,7 @@ def prompt_selector(prompt):
                "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT,
                "COMBINE_DOC_PROMPT": COMBINE_DOC_PROMPT,
                "BIZ_ANALYSIS_PROMPT": BIZ_ANALYSIS_PROMPT,
+               "SWOT Analysis TEST v1": SWOT_1,
                }
     if prompt not in prompts:
         raise ValueError(f"Invalid Prompt Name: {prompt}.")

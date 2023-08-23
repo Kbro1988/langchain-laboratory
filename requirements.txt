@@ -1,12 +1,12 @@
 langchain == 0.0.247
 watchdog==3.0.0
-openai
-chromadb == 0.4.3
-sentence_transformers
-python-dotenv
-docx2txt
-pymupdf
-streamlit
-jinja2
-weaviate-client
-tiktoken
+openai==0.27.8
+chromadb==0.4.3
+sentence_transformers==2.2.2
+python-dotenv==1.0.0
+docx2txt==0.8
+PyMuPDF==1.22.5
+streamlit==1.25.0
+Jinja2==3.1.2
+weaviate-client==3.22.1
+tiktoken==0.4.0

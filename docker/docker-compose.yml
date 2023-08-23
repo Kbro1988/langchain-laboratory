@@ -18,13 +18,14 @@ services:
       WEAVIATE_URL: ${WEAVIATE_URL}
     volumes:
       - ./document_repo:/app/document_repo:rw
+      - ./weaviate:/app/weaviate:rw  # need to access and load for templates
     networks:
       - net
 
    chroma:
     container_name: chroma_db
     restart: always
-    image: barweiss45/chroma:0.4.6
+    image: barweiss45/chroma:latest
     volumes:
       - ./chroma:/chroma
       - index_data:/index_data

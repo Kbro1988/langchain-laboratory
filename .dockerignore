@@ -1,7 +1,1 @@
-.env
-.python-version
-__pycache__
-func_logger.py
-.vscode
-chroma/
-weaviate/weaivate_data/
+docker/.dockerignore

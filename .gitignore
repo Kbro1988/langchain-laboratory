@@ -11,6 +11,7 @@ weaviate/weaviate_data/
 rtdocs/
 document_repo/*
 .vscode/
+test_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

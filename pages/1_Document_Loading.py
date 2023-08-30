@@ -14,6 +14,9 @@ configs = Config()
 # Set looger
 logger = configs.logger
 
+#Custom Prompot Director
+custom_prompt_directory = configs.doc_directory.joinpath("custom_prompts")
+
 # Initialize Session State for docs_hide, csv_hide. Used when there are no files.
 if "docs_hide" not in st.session_state:
     st.session_state["docs_hide"] = True
@@ -113,3 +116,14 @@ if st.button("Submit", disabled=st.session_state["csv_hide"], key="docLoadSubmit
     with st.spinner('Processing...'):
         chroma_create_vectordb(csv_file, collection_name)
         st.experimental_rerun()
+
+# Upload a Custom Prompt
+
+st.subheader("Upload a Custom Prompt to Doc Repo/Custom_Prompts")
+yaml_file = st.file_uploader(label="Upload CSV File", type=["yaml"], accept_multiple_files=False, key="uploaderCustomPromptYaml", )
+if yaml_file is not None:
+    fp = custom_prompt_directory.joinpath(f"{yaml_file.name}")
+    with open(fp.as_posix(), "wb") as f:
+        f.write(yaml_file.getbuffer())
+        logger.info("%s uploaded", yaml_file.name)
+        st.success(f"Uploaded {yaml_file.name} to {custom_prompt_directory.as_posix()}")

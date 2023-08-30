@@ -4,7 +4,7 @@ import argparse
 from textwrap import dedent
 
 import langchain
-#from langchain.cache import InMemoryCache
+from langchain.cache import InMemoryCache
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
 from langchain.chains.question_answering import load_qa_chain
@@ -14,159 +14,173 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationStringBufferMemory
 
 from app_prompt import (BIZ_ANALYSIS_PROMPT, COMBINE_DOC_PROMPT,
-                        GIT_BOOK_PROMPT, TAE_KIM_PROMPT, SWOT_1)
-from data.chroma_db import chroma_vectordb
+                        GIT_BOOK_PROMPT, SWOT_1, TAE_KIM_PROMPT,
+                        get_custom_prompt)
 from config import Config
+from data.chroma_db import chroma_vectordb
 from data.weaviate_db import weaviate_vectordb
 
 # Load config settings
 configs = Config()
 
+# Set logger
 logger = configs.logger
 
 # Retrieve OpenAI API Key from .env file
 openai_api_key = configs.OPENAI_API_KEY
 
 # When using Chat_Models the llm_cache will improve performance
-# langchain.llm_cache = InMemoryCache() # Turn this off when you want to test various models
+langchain.llm_cache = InMemoryCache()  # Turn this off when you want to test various models
 langchain.debug = True
 
-memory = ConversationStringBufferMemory(input_key="question", return_messages=True,)
 
+class Query:
 
-AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
-                     "TK_CHAT_PROMPT",
-                     "GIT_BOOK_PROMPT",
-                     "COMBINE_DOC_PROMPT",
-                     "BIZ_ANALYSIS_PROMPT",
-                     "SWOT Analysis TEST v1", ]
+    AVAILABLE_PROMPTS = ["LG_PROMPT - Gen Use",
+                         "TK_CHAT_PROMPT",
+                         "GIT_BOOK_PROMPT",
+                         "COMBINE_DOC_PROMPT",
+                         "BIZ_ANALYSIS_PROMPT",
+                         "SWOT Analysis TEST v1",
+                         "CUSTOM PROMPT", ]
 
-MODELS = ["gpt-3.5-turbo",
-          "gpt-3.5-turbo-0613",
-          "gpt-3.5-turbo-16k-0613",
-          "gpt-4-0613",
-          ]
+    MODELS = ["gpt-3.5-turbo",
+              "gpt-3.5-turbo-0613",
+              "gpt-3.5-turbo-16k-0613",
+              "gpt-4-0613",
+              ]
 
+    memory = ConversationStringBufferMemory(input_key="question", return_messages=True,)
 
-def get_query(model, query, vectordb_choice, collection_name, text_key="text", prompt="LG_PROMPT", 
-              chain_type="stuff", search_name="Similarity", k_value=4, **kwargs) -> list[str]:
+    def __init__(self, model=None, query=None, vectordb_choice=None, collection_name=None, text_key="text", prompt="LG_PROMPT", chain_type="stuff",
+                 search_name="Similarity", k_value=4, **kwargs) -> None:
+        self.model = model
+        self.query = query
+        self.vetordb_choice = vectordb_choice
+        self.collection_name = collection_name
+        self.text_key = text_key
+        self.prompt = prompt
+        self.chain_type = chain_type
+        self.search_name = search_name
+        self.k_value = k_value
+        self._custom_prompt_filename = None
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-    logger.info("Query Values: %s | %s | %s | %s | %s | %d", query, vectordb_choice, collection_name, prompt, search_name, k_value)
-    llm = ChatOpenAI(streaming=True, callbacks=[StreamingStdOutCallbackHandler()], temperature=0, openai_api_key=openai_api_key, model=model,)
+    @property
+    def custom_prompt_filename(self):
+        return self._custom_prompt_filename
 
-    # Set the Vectore Store Based on vectordb_choice
-    if vectordb_choice == "ChromaDB":
+    @custom_prompt_filename.setter
+    def custom_prompt_filename(self, name):
+        self._custom_prompt_filename = name
+
+    def get_query(self, model, query, vectordb_choice, collection_name, text_key="text", prompt="LG_PROMPT",
+                  chain_type="stuff", search_name="Similarity", k_value=4, **kwargs) -> list[str]:
+
+        logger.info("Query Values: %s | %s | %s | %s | %s | %d", query, vectordb_choice, collection_name, prompt, search_name, k_value)
+        llm = ChatOpenAI(streaming=True, callbacks=[StreamingStdOutCallbackHandler()], temperature=0, openai_api_key=openai_api_key, model=model,)
+
+        # Set the Vectore Store Based on vectordb_choice
+        if vectordb_choice == "ChromaDB":
+            db = chroma_vectordb(collection_name)
+        elif vectordb_choice == "Weaviate":
+            db = weaviate_vectordb(collection_name, text_key)
+        else:
+            raise ValueError("'collection_name' must defined.")
+
+        search_kwargs = {"k": k_value}
+        if kwargs:
+            search_kwargs.update(**kwargs)
+
+        search_dict = {
+            "Similarity": "similarity",
+            "MMR": "mmr",
+            "Similarity and Display Score": "Score",
+            "Similarity with Score Threshold": "similarity_score_threshold",
+            "Filter": None
+        }
+
+        search_type = search_dict[search_name]
+
+        if search_type == "Score":
+            docsearch = db.similarity_search_with_score(query)
+            docsearch_no_tup = [doc[0] for doc in docsearch]  # Remove Score from tuple
+            response = self.chain_query(llm, query, docsearch_no_tup, prompt)  # Can not use the score object.
+            return [response, docsearch]
+        elif search_type is not None:
+            retriever = db.as_retriever(search_type=search_type, search_kwargs=search_kwargs)
+        else:
+            # For Filter based retriever
+            retriever = db.as_retriever(search_kwargs={"filter": search_kwargs})
+        response = self.retrieval_qa(llm, query, prompt, retriever=retriever, chain_type=chain_type, return_source_documents=True)
+        return response
+
+    def vectordb_search_with_score(self, vectordb_choice, query, collection_name, text_key, k_value) -> tuple:
+        if vectordb_choice == "ChromaDB":
+            db = chroma_vectordb(collection_name)
+            docsearch = db.similarity_search_with_score(query)
+            return docsearch
+        elif vectordb_choice == "Weaviate":
+            db = weaviate_vectordb(collection_name, text_key)
+            docsearch = db.similarity_search_with_score(query, k_value, by_text=False)
+            return docsearch
+
+    def prompt_selector(self, prompt):
+        if prompt == "CUSTOM PROMPT":
+            filename = self.custom_prompt_filename
+            return get_custom_prompt(filename)
+        prompts = {"LG_PROMPT - Gen Use": LG_PROMPT,
+                   "TK_CHAT_PROMPT": TAE_KIM_PROMPT,
+                   "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT,
+                   "COMBINE_DOC_PROMPT": COMBINE_DOC_PROMPT,
+                   "BIZ_ANALYSIS_PROMPT": BIZ_ANALYSIS_PROMPT,
+                   "SWOT Analysis TEST v1": SWOT_1, }
+        if prompt not in prompts:
+            raise ValueError(f"Invalid Prompt Name: {prompt}.")
+        return prompts[prompt]
+
+    def chain_query(self, llm, query, docsearch, prompt):
+        # Initialize Memory Buffer for Conversation
+        prompt_template = self.prompt_selector(prompt)
+        chain = load_qa_chain(llm, chain_type="stuff", verbose=True, prompt=prompt_template, memory=self.memory)
+        return chain.run({"input_documents": docsearch, "question": query},)
+
+    def retrieval_qa(self, llm: ChatOpenAI, query: str, prompt: str, retriever,
+                     chain_type: str = "stuff", return_source_documents: bool = True) -> dict[str]:
+        # Initialize Memory Buffer for Conversation
+        if chain_type in ["map_reduce", "refine", "map_rerank"]:
+            qa_chain = load_qa_chain(llm, chain_type=chain_type,)
+        else:
+            prompt_template = self.prompt_selector(prompt)
+            qa_chain = load_qa_chain(llm, chain_type=chain_type, prompt=prompt_template, memory=self.memory)
+        qa = RetrievalQA(combine_documents_chain=qa_chain, retriever=retriever, verbose=True, return_source_documents=return_source_documents)
+        return qa.__call__({"query": query})
+
+    def load_memory(cls):
+        # Simple function to return history buffer*
+        output = cls.memory.load_memory_variables({''})
+        return output
+
+    def clear_memory(cls):
+        # Simple Function to reset Chat memory
+        cls.memory.clear()
+
+    def main(self, args):
+        if args.collection:
+            collection_name = args.collection
+        else:
+            collection_name = input("Enter collection name of query: ")
+        if args.prompt:
+            prompt = args.prompt
+        else:
+            prompt = "LG_PROMPT - Gen Use"
         db = chroma_vectordb(collection_name)
-    elif vectordb_choice == "Weaviate":
-        db = weaviate_vectordb(collection_name, text_key)
-    else:
-        raise ValueError("'collection_name' must defined.")
-
-    search_kwargs = {"k": k_value}
-    if kwargs:
-        search_kwargs.update(**kwargs)
-
-    search_dict = {
-        "Similarity": "similarity",
-        "MMR": "mmr",
-        "Similarity and Display Score": "Score",
-        "Similarity with Score Threshold": "similarity_score_threshold",
-        "Filter": None
-    }
-
-    search_type = search_dict[search_name]
-
-    if search_type == "Score":
-        docsearch = db.similarity_search_with_score(query)
-        docsearch_no_tup = [doc[0] for doc in docsearch]  # Remove Score from tuple
-        response = chain_query(llm, query, docsearch_no_tup, prompt)  # Can not use the score object.
-        return [response, docsearch]
-    elif search_type is not None:
-        retriever = db.as_retriever(search_type=search_type, search_kwargs=search_kwargs)
-    else:
-        # For Filter based retriever
-        retriever = db.as_retriever(search_kwargs={"filter": search_kwargs})
-    response = retrieval_qa(llm, query, prompt, retriever=retriever, chain_type=chain_type, return_source_documents=True)
-    return response
-
-
-def vectordb_search_with_score(vectordb_choice, query, collection_name, text_key, k_value) -> tuple:
-    if vectordb_choice == "ChromaDB":
-        db = chroma_vectordb(collection_name)
-        docsearch = db.similarity_search_with_score(query)
-        return docsearch
-    elif vectordb_choice == "Weaviate":
-        db = weaviate_vectordb(collection_name, text_key)
-        docsearch = db.similarity_search_with_score(query, k_value, by_text=False)
-        return docsearch
-
-
-def prompt_selector(prompt):
-    prompts = {"LG_PROMPT - Gen Use": LG_PROMPT,
-               "TK_CHAT_PROMPT": TAE_KIM_PROMPT,
-               "GIT_BOOK_PROMPT": GIT_BOOK_PROMPT,
-               "COMBINE_DOC_PROMPT": COMBINE_DOC_PROMPT,
-               "BIZ_ANALYSIS_PROMPT": BIZ_ANALYSIS_PROMPT,
-               "SWOT Analysis TEST v1": SWOT_1,
-               }
-    if prompt not in prompts:
-        raise ValueError(f"Invalid Prompt Name: {prompt}.")
-    return prompts[prompt]
-
-
-def chain_query(llm, query, docsearch, prompt):
-    # Initialize Memory Buffer for Conversation
-    prompt_template = prompt_selector(prompt)
-    chain = load_qa_chain(llm, chain_type="stuff",
-                          verbose=True,
-                          prompt=prompt_template,
-                          memory=memory)
-    return chain.run({"input_documents": docsearch, "question": query},)
-
-def retrieval_qa(llm: ChatOpenAI, query: str, prompt: str, retriever, chain_type: str ="stuff", return_source_documents: bool =False)-> dict[str]:
-    # Initialize Memory Buffer for Conversation
-    if chain_type in ["map_reduce", "refine", "map_rerank"]:
-        qa_chain = load_qa_chain(llm, chain_type=chain_type,)
-    else:
-        prompt_template = prompt_selector(prompt)
-        qa_chain = load_qa_chain(llm, chain_type=chain_type, prompt=prompt_template, memory=memory)
-    qa = RetrievalQA(combine_documents_chain=qa_chain, retriever=retriever, verbose=True, return_source_documents=return_source_documents)
-    return qa(query)
-
-
-def load_memory():
-    # Simple function to return history buffer
-    output = memory.load_memory_variables({''})
-    return output
-
-
-def clear_memory():
-    # Simple Function to reset Chat memory
-    memory.clear()
-
-
-def main(args):
-    # if args.log_level:
-    #     configure_logging(level=args.log_level)
-    if args.collection:
-        collection_name = args.collection
-    else:
-        collection_name = input("Enter collection name of query: ")
-    if args.prompt:
-        prompt = args.prompt
-    else:
-        prompt = "LG_PROMPT - Gen Use"
-    db = chroma_vectordb(collection_name)
-    while True:
-        query = input("What is your question? >>> ")
-        docsearch = db.similarity_search(query=query, k=4)
-        chain_query(llm=ChatOpenAI(streaming=True,
-                                   callbacks=[StreamingStdOutCallbackHandler()],
-                                   temperature=0,
-                                   openai_api_key=openai_api_key),
-                    query=query,
-                    docsearch=docsearch,
-                    prompt=prompt)
+        while True:
+            query = input("What is your question? >>> ")
+            docsearch = db.similarity_search(query=query, k=4)
+            self.chain_query(llm=ChatOpenAI(streaming=True, callbacks=[StreamingStdOutCallbackHandler()], temperature=0,
+                                            openai_api_key=openai_api_key), query=query, docsearch=docsearch, prompt=prompt)
 
 
 if __name__ == "__main__":
@@ -194,4 +208,4 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--collection", type=str, help="Set the Vector DB Collection to be queried.")
     parser.add_argument("-p", "--prompt", type=str, help="Set the prompt template. Default is LG_PROMPT.")
     args = parser.parse_args()
-    main(args)
+    Query.main(args)

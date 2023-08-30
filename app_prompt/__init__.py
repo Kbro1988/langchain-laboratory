@@ -3,3 +3,4 @@ from app_prompt.combined_docs_prompt import COMBINE_DOC_PROMPT
 from app_prompt.git_book_prompt import GIT_BOOK_PROMPT
 from app_prompt.tae_kim_prompt import TAE_KIM_PROMPT
 from app_prompt.SWOT_1 import SWOT_1
+from app_prompt.custom_prompt import get_custom_prompt

@@ -1,3 +1,6 @@
+#! /usr/bin/env python3
+
+import os
 import re
 from textwrap import dedent
 
@@ -6,8 +9,7 @@ import streamlit as st
 st.set_page_config(page_title="LangChain-Laboratory", page_icon="🔬", layout="wide")  # This must be placed before data files are imported
 
 from config import Config
-from data.ai_api import (AVAILABLE_PROMPTS, MODELS, clear_memory, get_query,
-                         load_memory)
+from data.ai_api import Query
 from data.chroma_db import list_collections
 from data.weaviate_db import weaviate_get_classes, weaviate_get_schema
 
@@ -16,6 +18,12 @@ configs = Config()
 
 # Set Logging
 logger = configs.logger
+
+# Instantiate
+query_session = Query()
+
+# Set the directory for custom prompts
+custom_prompt_directory = configs.custom_prompt_directory
 
 
 def session_state(key: any, value: any) -> None:
@@ -50,7 +58,7 @@ main_tab, docsearch_output = st.tabs(["Main 🏠",  "Vector Store Content Chunks
 
 with main_tab:
     with st.expander("Query Settings", expanded=True):
-        model = st.selectbox("Choose LLM", options=MODELS, index=0,
+        model = st.selectbox("Choose LLM", options=query_session.MODELS, index=0,
                              help=dedent("""\
                                         Choose the LMM model you wish to use. Earlier models will
                                         provide faster performance, but may yeild less quality responses
@@ -76,13 +84,19 @@ with main_tab:
                                     key="queryWvClProp", disabled="Weaviate" not in st.session_state["vectordb_choice"])
         else:
             text_key = None
-        prompt = st.selectbox("Choose Prompt Template", options=AVAILABLE_PROMPTS)
+        prompt = st.selectbox("Choose Prompt Template", options=query_session.AVAILABLE_PROMPTS, key="homePromptSelectBox")
+        if prompt == "CUSTOM PROMPT":
+            query_session.custom_prompt_filename = st.selectbox("Choose the custom prompt filename.",
+                                                               options=[doc for doc in os.listdir(custom_prompt_directory.as_posix()) if doc[-5:] == ".yaml"],
+                                                               disabled=st.session_state['homePromptSelectBox'] != "CUSTOM PROMPT",
+                                                               key="homeCustomPromptFilenameSelectBox")
         search_name = st.radio("Search Type", ("Similarity", "MMR", "Similarity and Display Score", "Similarity with Score Threshold", "Filter"),
                                index=0, key="querySearchType", horizontal=True, help=dedent("""\
                                 - Activate an MMR document search. Increases Document Diversity
                                 - Set Relvance Score"""))
         k_value = st.select_slider("Select K-value for Doc Query", options=[k_val for k_val in range(1, 8)], value=4, format_func=int,
-                                   help=dedent("""Choose the K Value (1 through 8. Default: 4.)
+                                   help=dedent("""\
+                                               Choose the K Value (1 through 8. Default: 4.)
                                                for the simlarity search. This will determine how many
                                                chuncks you will retrieve from the Vector Store."""))
         kwargs_text = st.text_input("Search Keys", placeholder="None", key="homeSearchKeysTextInput")
@@ -102,9 +116,9 @@ with main_tab:
     query = st.text_input("Query")
 
     with st.expander("Memory"):
-        st.json(load_memory())
+        st.json(query_session.load_memory())
         if st.button("Reset Memory"):
-            clear_memory()
+            query_session.clear_memory()
             st.experimental_rerun()
 
     # Query Response
@@ -114,7 +128,7 @@ with main_tab:
     with response_box.container():
         if st.button("Submit"):
             with st.spinner("Processing..."):
-                output = get_query(model, query, vectordb_choice, collection_name, text_key, prompt, chain_type, search_name, k_value, **kwargs)
+                output = query_session.get_query(model, query, vectordb_choice, collection_name, text_key, prompt, chain_type, search_name, k_value, **kwargs)
             if search_name == "Similarity and Display Score":
                 st.markdown(output[0])
             else:
@@ -131,8 +145,12 @@ with docsearch_output:
                 st.code(f"Score: {line[1]}")
         else:
             for docnum, line in enumerate(output["source_documents"]):
-                st.write(f"Doc Number: {docnum + 1}")
+                if line.metadata:
+                    source_info = line.metadata["page"]
+                else:
+                    source_info = "Null"
+                st.write(f"Doc Number: {docnum + 1} - Source Page: {source_info}")
                 st.code(f"Page Content:\n{line.page_content}")
                 st.code(f"Metadata:\n{line.metadata}")
-    except NameError:
+    except (NameError, TypeError):
         st.write("Null")

@@ -1,5 +1,12 @@
-FROM python:3.11-bookworm
+FROM ghcr.io/barweiss45/lc-lab-base-python:3.11-bookworm
+
+LABEL REPOSITORY=ghcr.io/barweiss45/lc-lab-base-python:3.11-bookworm
+
+LABEL version=lc-lab-app-base
+
 WORKDIR /app
+
 COPY ./requirements.txt .
+
 RUN  pip install --upgrade pip &&\
      pip install -r requirements.txt

@@ -9,7 +9,7 @@ fi
 FQDN=$1
 
 test_chroma() {
-    local RESPONSE=$(curl -s -o /dev/null -I -w "%{http_code}\n" -X GET http://chroma:8000/api/v1/heartbeat)
+    local RESPONSE=$(curl -s -o /dev/null -I -w "%{http_code}\n" -X GET http://chroma_db:8000/api/v1/heartbeat)
     exit_code="$?"
     response_code="$RESPONSE"
 

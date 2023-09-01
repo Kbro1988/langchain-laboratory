@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-   lc-lab-app:
+   app:
     depends_on:
       - chroma
       - weaviate

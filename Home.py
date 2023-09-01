@@ -87,9 +87,9 @@ with main_tab:
         prompt = st.selectbox("Choose Prompt Template", options=query_session.AVAILABLE_PROMPTS, key="homePromptSelectBox")
         if prompt == "CUSTOM PROMPT":
             query_session.custom_prompt_filename = st.selectbox("Choose the custom prompt filename.",
-                                                               options=[doc for doc in os.listdir(custom_prompt_directory.as_posix()) if doc[-5:] == ".yaml"],
-                                                               disabled=st.session_state['homePromptSelectBox'] != "CUSTOM PROMPT",
-                                                               key="homeCustomPromptFilenameSelectBox")
+                                                                options=[doc for doc in os.listdir(custom_prompt_directory.as_posix()) if doc[-5:] == ".yaml"],
+                                                                disabled=st.session_state['homePromptSelectBox'] != "CUSTOM PROMPT",
+                                                                key="homeCustomPromptFilenameSelectBox")
         search_name = st.radio("Search Type", ("Similarity", "MMR", "Similarity and Display Score", "Similarity with Score Threshold", "Filter"),
                                index=0, key="querySearchType", horizontal=True, help=dedent("""\
                                 - Activate an MMR document search. Increases Document Diversity

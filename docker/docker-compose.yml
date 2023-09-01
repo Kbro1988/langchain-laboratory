@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-   langchain-laboratory:
+   lc-lab-app:
     depends_on:
       - chroma
       - weaviate
@@ -11,6 +11,8 @@ services:
       - .env
     build:
       context: "."
+      args:
+        - fqdn=localhost
       tags:
         - "lc-lab-app:0.0.204"
     ports:

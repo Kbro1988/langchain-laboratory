@@ -3,7 +3,7 @@
 
 # Speficic to the project
 chroma/
-weaviate/
+weaviate/weaviate_data/
 notebooks/
 
 ## Loaded from Docker init

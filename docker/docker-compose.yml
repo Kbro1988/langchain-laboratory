@@ -13,13 +13,12 @@ services:
       context: "."
       args:
         - fqdn=localhost
-      tags:
-        - "lc-lab-app:0.0.204"
     ports:
       - "8501:8501"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       WEAVIATE_URL: ${WEAVIATE_URL}
+      CHROMA_DB_URL: ${CHROMA_DB_URL}
     volumes:
       - ./document_repo:/app/document_repo:rw
       - ./weaviate:/app/weaviate:rw  # need to access and load for templates

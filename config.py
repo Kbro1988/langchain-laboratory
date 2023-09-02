@@ -32,6 +32,7 @@ class Config:
         self.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
         self.TOKENIZERS_PARALLELISM = os.environ.get("TOKENIZERS_PARALLELISM")
         self.WEAVIATE_URL = os.environ.get("WEAVIATE_URL")
+        self.CHROMA_DB_URL = os.environ.get("CHROMA_DB_URL")
         self.SERPAPI_KEY = os.environ.get("SERPAPI_KEY")
         self._custom_prompt_directory = None
         #  Process **kwargs

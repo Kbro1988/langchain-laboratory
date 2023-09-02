@@ -14,13 +14,17 @@ configs = Config()
 # Set Logging
 logger = configs.logger
 
+# CHROMA DB URL
+CHROMA_DB_URL = configs.CHROMA_DB_URL.split(":")
+
 # Document Loaders and handling
 handler = DocumentHandling()
 
 embedding_function = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2")
 
-CHROMA_CLIENT = chromadb.HttpClient(host='chroma_db', port=8000, settings=chroma_settings(anonymized_telemetry=False))
+CHROMA_CLIENT = chromadb.HttpClient(host=CHROMA_DB_URL[0], port=CHROMA_DB_URL[1],
+                                    settings=chroma_settings(anonymized_telemetry=False))
 
 
 def chroma_create_vectordb(filename, collection_name):

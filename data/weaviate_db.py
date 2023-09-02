@@ -3,7 +3,6 @@ import json
 from jinja2 import Environment, FileSystemLoader
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Weaviate
-#from streamlit import cache_resource
 
 import weaviate
 from config import Config
